@@ -1,5 +1,5 @@
 # rustruut
-Like goruut except in rust
+Like [goruut](https://github.com/neurlang/goruut) except in rust
 
 
 ## Run
