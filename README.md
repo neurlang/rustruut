@@ -2,7 +2,7 @@
 
 ![:rustruut](https://count.getloli.com/@:rustruut?theme=capoo-1)
 
-Like [goruut](https://github.com/neurlang/goruut) except in rust
+Like [goruut](https://github.com/neurlang/goruut) except in Rust
 
 
 ## Run
