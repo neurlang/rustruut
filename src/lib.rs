@@ -3,7 +3,9 @@
 pub mod interfaces;
 pub mod di;
 pub mod phonemize;
-
+pub mod usecases {
+    pub mod phonemize;
+}
 pub mod models {
     pub mod requests;
     pub mod responses;
