@@ -1,17 +1,16 @@
+//! phonemizer library - explicit constructor injection with traits
+
+pub mod interfaces;
+pub mod di;
 pub mod phonemize;
 
-pub struct RustRuut {
-    phonemizer: phonemize::Phonemizer,
+pub mod models {
+    pub mod requests;
+    pub mod responses;
 }
 
-impl RustRuut {
-    pub fn new() -> Self {
-        Self {
-            phonemizer: phonemize::Phonemizer::new(),
-        }
-    }
-
-    pub fn phonemize(&self, text: &str) -> String {
-        self.phonemizer.phonemize(text)
-    }
-}
+pub use phonemize::Phonemizer;
+pub use interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+pub use di::DependencyInjection;
+pub use models::requests::PhonemizeSentence as PhonemizeSentenceReq;
+pub use models::responses::{PhonemizeSentence as PhonemizeSentenceResp, PhonemizeSentenceWord};

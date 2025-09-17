@@ -1,11 +1,30 @@
-/*
-cargo run --example usage
-*/
-use rustruut::RustRuut;
+// examples/usage.rs
+use rustruut::{DependencyInjection, Phonemizer, models::requests::PhonemizeSentence};
+use serde_json;
 
-pub fn main() {
+fn main() {
+    // example input (Hebrew)
     let input = "הַ|כּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּ|רֶ֫גַע שֶׁ|בּוֹ אַתָּה מַאֲמִין שֶׁ|זֶּה אֶפְשָׁרִי!";
-    let rustruut = RustRuut::new();
-    let output = rustruut.phonemize(input);
-    println!("{}", output);
+
+    // build DI with defaults (dummy implementations)
+    let di = DependencyInjection::new();
+
+    // construct the phonemizer (types are inferred from the DI)
+    let phonemizer = Phonemizer::new(di);
+
+    // build the request model (matches your Rust request struct)
+    let req = PhonemizeSentence {
+        ipa_flavors: Vec::new(),
+        language: String::new(),
+        languages: Vec::new(),
+        sentence: input.to_string(),
+        is_reverse: false,
+        split_sentences: false,
+    };
+
+    // run the phonemizer
+    let resp = phonemizer.sentence(req);
+
+    // pretty-print JSON response
+    println!("{}", serde_json::to_string_pretty(&resp).unwrap());
 }
