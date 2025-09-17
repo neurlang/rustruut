@@ -1,14 +1,17 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+pub mod phonemize;
+
+pub struct RustRuut {
+    phonemizer: phonemize::Phonemizer,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl RustRuut {
+    pub fn new() -> Self {
+        Self {
+            phonemizer: phonemize::Phonemizer::new(),
+        }
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub fn phonemize(&self, text: &str) -> String {
+        self.phonemizer.phonemize(text)
     }
 }
