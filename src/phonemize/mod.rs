@@ -4,6 +4,9 @@ use crate::models::responses::PhonemizeSentence as Resp;
 use crate::di::DependencyInjection;
 use crate::usecases::phonemize::{PhonemizeUsecase, PhonemizeUsecaseImpl};
 
+#[cfg(test)]
+mod test;
+
 /// Public-facing Phonemizer API.
 /// It owns a usecase internally and exposes a simple `sentence` method.
 pub struct Phonemizer<P, I, D>

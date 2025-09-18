@@ -79,7 +79,7 @@ where
                 words.push(responses::PhonemizeSentenceWord {
                     clean_word: tok.clone(),
                     phonetic: "DUMMY".to_string(),
-                    pos_tags: None,
+                    pos_tags: serde_json::from_str("[]").unwrap(),
                     pre_punct: String::new(),
                     post_punct: String::new(),
                     is_first: i == 0,

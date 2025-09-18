@@ -10,7 +10,7 @@ pub struct PhonemizeSentenceWord {
     pub phonetic: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pos_tags: Option<serde_json::Value>,
+    pub pos_tags: Option<Value>,
 
     #[serde(default)]
     pub pre_punct: String,
