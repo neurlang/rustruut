@@ -16,3 +16,157 @@ cargo run --example usage
 ```console
 cargo test
 ```
+
+## Getting Started
+
+```rust
+use rustruut::{DependencyInjection, Phonemizer, models::requests::PhonemizeSentence};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let di = DependencyInjection::new();
+    let phonemizer = Phonemizer::new(di);
+
+    let req = PhonemizeSentence {
+        ipa_flavors: Vec::new(),
+        language: "EnglishAmerican".to_string(),
+        languages: Vec::new(),
+        sentence: "fast racing car".to_string(),
+        is_reverse: false,
+        split_sentences: false,
+    };
+
+    let resp = phonemizer.sentence(req)?;
+    println!("{}", resp.words.iter().map(|w| &w.phonetic).collect::<Vec<_>>().join(" "));
+
+    // Prints: fˈæst ɹˈeɪsɪŋ kˈɑɹ
+
+    // Now, convert it back
+    let req_reverse = PhonemizeSentence {
+        is_reverse: true,
+        ..req
+    };
+
+    let resp_reverse = phonemizer.sentence(req_reverse)?;
+    println!("{}", resp_reverse.words.iter().map(|w| &w.phonetic).collect::<Vec<_>>().join(" "));
+
+    // Prints: fast racing car
+
+    Ok(())
+}
+```
+
+> ℹ️ For English, we recommend using `EnglishBritish` or `EnglishAmerican` instead of `English`. These dialect-specific models use high-quality Kokoro Misaki dictionaries and produce better results, especially for reversing IPA back to text.
+
+---
+
+### Uyghur language, our highest quality language
+
+```rust
+let req = PhonemizeSentence {
+    language: "Uyghur".to_string(),
+    sentence: "قىزىل گۈل ئاتا".to_string(),
+    is_reverse: false,
+    // ... other fields
+};
+
+// Prints: qizil gyl ʔɑtɑ
+
+// Now, convert it back
+let req_reverse = PhonemizeSentence {
+    is_reverse: true,
+    // ... other fields same as above
+};
+
+// Prints: قىزىل گۈل ئاتا
+```
+
+The quality of translation varies across the 136 supported languages.
+
+---
+
+## Advanced Use
+
+### Multi-lingual sentence handling
+
+Use comma (`,`) separated languages in `languages` field. The first language is the preferred language:
+
+```rust
+let req = PhonemizeSentence {
+    languages: vec!["EnglishBritish".to_string(), "Slovak".to_string()],
+    sentence: "hello world ahojte notindictionary!!!!".to_string(),
+    // ... other fields
+};
+
+// Prints: həlˈoʊ wˈɜɹld aɦɔjcɛ ŋətandəktɪnˈɑːɪ!!!!
+```
+
+---
+
+### Numerics handling (English, Arabic)
+
+```rust
+let req = PhonemizeSentence {
+    language: "EnglishBritish".to_string(),
+    sentence: "100 bottles".to_string(),
+    // ... other fields
+};
+
+// Prints: wˈʌn hˈʌndɹəd bˈɒtəlz
+```
+
+---
+
+### Homograph handling (Hebrew3)
+
+```rust
+let req = PhonemizeSentence {
+    language: "Hebrew3".to_string(),
+    sentence: "השרים ביקשו מהשרים לפתוח את הדלתות של בית השרים.".to_string(),
+    // ... other fields
+};
+
+// Prints: hasaʁˈim bikʃˈu mehasaʁˈim liftˈoaχ ʔˈat hadlatˈot ʃˈel bˈet hasaʁˈim.
+```
+
+---
+
+### No punctuation
+
+Punctuation handling is controlled through the response processing. Use the `render_response_with_punct` function to include or exclude punctuation:
+
+```rust
+fn render_response_with_punct(resp: &PhonemizeSentenceResponse) -> String {
+    resp.words
+        .iter()
+        .map(|w| format!("{}{}{}", w.pre_punct, w.phonetic, w.post_punct))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+// For no punctuation, use only the phonetic field
+resp.words.iter().map(|w| &w.phonetic).collect::<Vec<_>>().join(" ")
+```
+
+---
+
+### Force a specific version
+
+Not possible currently (TODO)
+
+---
+
+### Use an online inference API
+
+Possible but need explain (TODO)
+
+---
+
+### Use an extra model
+
+Not possible currently (TODO)
+
+---
+
+### Configure a model download directory for faster startup
+
+Not possible currently (TODO)
