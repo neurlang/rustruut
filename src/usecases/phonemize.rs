@@ -21,7 +21,7 @@ where
     ipa: I,
     dict_getter: D,
     maxwrds: usize,
-    goruut: Option<Goruut>,
+    goruut: Option<Goruut<P, I, D>>,
     error: Option<RustruutError>,
 }
 
@@ -36,8 +36,12 @@ where
         let maxwrds = di.policy.get_policy_max_words();
         let models = HashMap::new();
         
+        let getter = di.dict_getter.clone();
+        let ipa = di.ipa.clone();
+	let policy = di.policy.clone();
+
         // Create goruut and handle the result properly
-        let goruut_result = Goruut::new(None, None, None, models);
+        let goruut_result = Goruut::new(di, None, None, None, models);
         
         // Extract the result or error
         let (goruut, error) = match goruut_result {
@@ -46,9 +50,9 @@ where
         };
 
         Self {
-            policy: di.policy,
-            ipa: di.ipa,
-            dict_getter: di.dict_getter,
+            policy: policy,
+            ipa: ipa,
+            dict_getter: getter,
             maxwrds,
             error,
             goruut,

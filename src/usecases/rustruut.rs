@@ -1,3 +1,5 @@
+use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+use crate::di::DependencyInjection;
 use std::collections::HashMap;
 use std::process::{Child, Command};
 use std::thread;
@@ -8,7 +10,7 @@ use thiserror::Error;
 
 use crate::models::{requests, responses};
 
-use super::config::{Config, ConfigApi};
+use super::config::{Config};
 use super::executable::{Executable, ExecutableError};
 use super::platform::Platform;
 use super::release::get_releases;
@@ -59,40 +61,40 @@ impl ToString for PhonemeResponse {
     }
 }
 
-pub struct Goruut {
+pub struct Goruut<P, I, D>
+where
+    P: PolicyMaxWords,
+    I: IpaFlavor,
+    D: DictGetter,
+{
+    policy: P,
+    ipa: I,
+    dict_getter: D,
     executable: Option<Executable>,
     platform: Option<Platform>,
     version: Option<String>,
     process: Option<Child>,
-    config: Box<dyn GoruutConfig>,
+    config: Config<P, I, D>,
 }
 
-trait GoruutConfig {
-    fn url(&self, subpath: &str) -> String;
-}
-
-impl GoruutConfig for Config {
-    fn url(&self, subpath: &str) -> String {
-        Config::url(self, subpath)
-    }
-}
-
-impl GoruutConfig for ConfigApi {
-    fn url(&self, subpath: &str) -> String {
-        ConfigApi::url(self, subpath)
-    }
-}
-
-impl Goruut {
-    pub fn new(version: Option<&str>, writeable_bin_dir: Option<&str>, api: Option<&str>, models: HashMap<String, String>) -> Result<Self, RustruutError> {
+impl<P, I, D> Goruut<P, I, D>
+where
+    P: PolicyMaxWords,
+    I: IpaFlavor,
+    D: DictGetter,
+{
+    pub fn new(di: DependencyInjection<P, I, D>, version: Option<&str>, writeable_bin_dir: Option<&str>, api: Option<&str>, models: HashMap<String, String>) -> Result<Self, RustruutError> {
         if let Some(api_url) = api {
-            let config = Box::new(ConfigApi::new(api_url));
+            let config = Config::new(di.clone());
             return Ok(Self {
+                policy: di.policy.clone(),
+                ipa: di.ipa.clone(),
+                dict_getter: di.dict_getter.clone(),
                 executable: None,
                 platform: None,
                 version: None,
                 process: None,
-                config,
+                config: config,
             });
         }
 
@@ -138,7 +140,7 @@ impl Goruut {
             Err(_) => executable.download(temp_dir.path())?,
         };
 
-        let config = Config::new();
+        let config = Config::new(di.clone());
         let config_path = temp_dir.path().join("goruut_config.json");
         config.serialize(config_path.to_str().unwrap(), &models)?;
 
@@ -150,14 +152,15 @@ impl Goruut {
         // Wait for the process to start serving
         thread::sleep(Duration::from_secs(2));
 
-        let config_box: Box<dyn GoruutConfig> = Box::new(config);
-
         Ok(Self {
+            policy: di.policy.clone(),
+            ipa: di.ipa.clone(),
+            dict_getter: di.dict_getter.clone(),
             executable: Some(executable),
             platform: Some(platform),
             version: Some(version),
             process: Some(process),
-            config: config_box,
+            config: config,
         })
     }
 
@@ -177,7 +180,12 @@ impl Goruut {
     }
 }
 
-impl Drop for Goruut {
+impl<P, I, D> Drop for Goruut<P, I, D>
+where
+    P: PolicyMaxWords,
+    I: IpaFlavor,
+    D: DictGetter,
+{
     fn drop(&mut self) {
         if let Some(process) = &mut self.process {
             let _ = process.kill();

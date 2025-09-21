@@ -61,6 +61,7 @@ mod tests {
 
     #[test]
     fn respects_max_words_policy() -> Result<(), Box<dyn std::error::Error>> {
+        #[derive(Clone)]
         struct TwoWordPolicy;
         impl crate::interfaces::PolicyMaxWords for TwoWordPolicy {
             fn get_policy_max_words(&self) -> usize { 2 }

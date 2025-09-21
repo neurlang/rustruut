@@ -3,7 +3,7 @@ use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
 /// A small, explicit, compile-time DI container that simply holds the three
 /// expected components. The generic parameters allow compile-time wiring of
 /// concrete implementations.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DependencyInjection<P = crate::di::default_impls::DummyPolicy,
                                I = crate::di::default_impls::DummyIpaFlavor,
                                D = crate::di::default_impls::DummyDict>

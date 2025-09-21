@@ -1,3 +1,5 @@
+use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+use crate::di::DependencyInjection;
 use rand::Rng;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -15,18 +17,36 @@ struct LoadModel {
 struct ConfigData {
     port: String,
     admin_port: String,
-    policy_max_words: u32,
+    policy_max_words: usize,
     load_models: Option<Vec<LoadModel>>,
 }
 
-pub struct Config {
+pub struct Config<P, I, D>
+where
+    P: PolicyMaxWords,
+    I: IpaFlavor,
+    D: DictGetter,
+{
+    policy: P,
+    ipa: I,
+    dict: D,
     port: u16,
 }
 
-impl Config {
-    pub fn new() -> Self {
+impl<P, I, D> Config<P, I, D>
+where
+    P: PolicyMaxWords,
+    I: IpaFlavor,
+    D: DictGetter,
+{
+    pub fn new(di: DependencyInjection<P, I, D>) -> Self {
         let port = rand::thread_rng().gen_range(1024..=65535);
-        Self { port }
+        Self {
+            policy: di.policy.clone(),
+            ipa: di.ipa.clone(),
+            dict: di.dict_getter.clone(),
+            port: port
+        }
     }
 
     pub fn serialize(&self, filename: &str, models: &HashMap<String, String>) -> std::io::Result<()> {
@@ -41,7 +61,7 @@ impl Config {
         let data = ConfigData {
             port: self.port.to_string(),
             admin_port: (self.port - 1).to_string(),
-            policy_max_words: 9999999,
+            policy_max_words: self.policy.get_policy_max_words(),
             load_models: if load_models.is_empty() {
                 None
             } else {
@@ -57,21 +77,5 @@ impl Config {
 
     pub fn url(&self, subpath: &str) -> String {
         format!("http://127.0.0.1:{}/{}", self.port, subpath)
-    }
-}
-
-pub struct ConfigApi {
-    base_url: String,
-}
-
-impl ConfigApi {
-    pub fn new(url: &str) -> Self {
-        Self {
-            base_url: url.to_string(),
-        }
-    }
-
-    pub fn url(&self, subpath: &str) -> String {
-        format!("{}/{}", self.base_url, subpath)
     }
 }
