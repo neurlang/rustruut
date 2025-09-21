@@ -1,9 +1,9 @@
-use super::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
+use super::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+use crate::di::DependencyInjection;
 use crate::models::requests::PhonemizeSentence as Req;
 use crate::models::responses::PhonemizeSentence as Resp;
-use crate::di::DependencyInjection;
 use crate::usecases::phonemize::{PhonemizeUsecase, PhonemizeUsecaseImpl};
-use crate::usecases::rustruut::{RustruutError};
+use crate::usecases::rustruut::RustruutError;
 
 #[cfg(test)]
 mod test;

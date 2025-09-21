@@ -54,13 +54,14 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct PhonemizeSentence {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_null_as_empty_vec"
-    )]
+    #[serde(default, deserialize_with = "deserialize_null_as_empty_vec")]
     pub words: Vec<PhonemizeSentenceWord>,
 
-    #[serde(rename = "ErrorWordLimitExceeded", default, skip_serializing_if = "std::ops::Not::not")]
+    #[serde(
+        rename = "ErrorWordLimitExceeded",
+        default,
+        skip_serializing_if = "std::ops::Not::not"
+    )]
     pub error_word_limit_exceeded: bool,
 }
 

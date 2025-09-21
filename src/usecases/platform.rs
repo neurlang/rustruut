@@ -110,6 +110,10 @@ impl Platform {
 
 impl ToString for Platform {
     fn to_string(&self) -> String {
-        format!("Platform(OS: {}, Architecture: {})", self.os.to_string(), self.architecture.to_string())
+        format!(
+            "Platform(OS: {}, Architecture: {})",
+            self.os.to_string(),
+            self.architecture.to_string()
+        )
     }
 }

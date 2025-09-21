@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::Phonemizer;
     use crate::di::DependencyInjection;
     use crate::models::requests::PhonemizeSentence as Req;
     use crate::models::responses::PhonemizeSentence as Resp;
+    use crate::Phonemizer;
 
     /// Convert a PhonemizeSentence into a human-readable string with punctuation.
     /// Each word is rendered as `pre_punct + phonetic + post_punct` and joined by spaces.
@@ -64,7 +64,9 @@ mod tests {
         #[derive(Clone)]
         struct TwoWordPolicy;
         impl crate::interfaces::PolicyMaxWords for TwoWordPolicy {
-            fn get_policy_max_words(&self) -> usize { 2 }
+            fn get_policy_max_words(&self) -> usize {
+                2
+            }
         }
 
         let di = DependencyInjection::with_parts(

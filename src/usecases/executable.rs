@@ -1,7 +1,7 @@
+use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
-use sha2::{Sha256, Digest};
 use thiserror::Error;
 
 use super::platform::{Architecture, OS};
@@ -34,7 +34,13 @@ impl Executable {
             OS::Darwin => ".dmg",
             _ => "",
         };
-        format!("goruut.{}.{}.{}{}", self.sha256, arch, self.os.to_string(), os_ext)
+        format!(
+            "goruut.{}.{}.{}{}",
+            self.sha256,
+            arch,
+            self.os.to_string(),
+            os_ext
+        )
     }
 
     pub fn file_name_public(&self) -> String {
@@ -44,22 +50,26 @@ impl Executable {
 
     pub fn exists(&self, temp_dir: &Path) -> Result<PathBuf, ExecutableError> {
         let temp_file_path = temp_dir.join(self.file_name());
-        
+
         if !temp_file_path.exists() {
-            return Err(ExecutableError::Verification("File does not exist".to_string()));
+            return Err(ExecutableError::Verification(
+                "File does not exist".to_string(),
+            ));
         }
 
         // Verify file size
         let metadata = fs::metadata(&temp_file_path)?;
         if metadata.len() != self.size {
-            return Err(ExecutableError::Verification("File size mismatch".to_string()));
+            return Err(ExecutableError::Verification(
+                "File size mismatch".to_string(),
+            ));
         }
 
         // Verify SHA256
         let mut file = File::open(&temp_file_path)?;
         let mut hasher = Sha256::new();
         let mut buffer = [0; 4096];
-        
+
         loop {
             let bytes_read = file.read(&mut buffer)?;
             if bytes_read == 0 {
@@ -82,7 +92,7 @@ impl Executable {
 
         for url_prefix in &self.servers {
             let url = format!("{}{}", url_prefix, self.file_name_public());
-            
+
             let response = match reqwest::blocking::get(&url) {
                 Ok(resp) => resp,
                 Err(e) => {
@@ -97,7 +107,9 @@ impl Executable {
             }
 
             let mut file = File::create(&temp_file_path)?;
-            let content = response.bytes().map_err(|e| ExecutableError::Download(e.to_string()))?;
+            let content = response
+                .bytes()
+                .map_err(|e| ExecutableError::Download(e.to_string()))?;
             file.write_all(&content)?;
 
             // Verify the downloaded file
@@ -120,6 +132,8 @@ impl Executable {
             }
         }
 
-        Err(ExecutableError::Download(last_error.unwrap_or_else(|| "All download attempts failed".to_string())))
+        Err(ExecutableError::Download(last_error.unwrap_or_else(|| {
+            "All download attempts failed".to_string()
+        })))
     }
 }

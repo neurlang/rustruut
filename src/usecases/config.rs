@@ -1,5 +1,5 @@
-use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 use crate::di::DependencyInjection;
+use crate::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
 use rand::Rng;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -49,11 +49,15 @@ where
             ipa: di.ipa.clone(),
             dict: di.dict_getter.clone(),
             api: di.api.clone(),
-            port: port
+            port: port,
         }
     }
 
-    pub fn serialize(&self, filename: &str, models: &HashMap<String, String>) -> std::io::Result<()> {
+    pub fn serialize(
+        &self,
+        filename: &str,
+        models: &HashMap<String, String>,
+    ) -> std::io::Result<()> {
         let mut load_models = Vec::new();
         for (lang, file) in models {
             load_models.push(LoadModel {

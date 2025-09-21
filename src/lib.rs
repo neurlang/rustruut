@@ -1,26 +1,26 @@
 //! phonemizer library - explicit constructor injection with traits
 
 // PUBLIC
-pub mod interfaces;
 pub mod di;
+pub mod interfaces;
 pub mod phonemize;
 pub mod models {
     pub mod requests;
     pub mod responses;
 }
 
-pub use phonemize::Phonemizer;
-pub use interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 pub use di::DependencyInjection;
+pub use interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
 pub use models::requests::PhonemizeSentence as PhonemizeSentenceReq;
 pub use models::responses::{PhonemizeSentence as PhonemizeSentenceResp, PhonemizeSentenceWord};
+pub use phonemize::Phonemizer;
 
 // INTERNAL USE
 pub mod usecases {
-    pub mod phonemize;
-    pub mod rustruut;
     pub mod config;
     pub mod executable;
+    pub mod phonemize;
     pub mod platform;
     pub mod release;
+    pub mod rustruut;
 }

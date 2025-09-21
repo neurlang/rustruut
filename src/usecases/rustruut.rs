@@ -1,16 +1,18 @@
-use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 use crate::di::DependencyInjection;
+use crate::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::process::{Child, Command};
+use std::io::{BufRead, BufReader};
+use std::process::{Child, Command, Stdio};
+use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::thread;
 use std::time::Duration;
 use tempfile::TempDir;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::models::{requests, responses};
 
-use super::config::{Config};
+use super::config::Config;
 use super::executable::{Executable, ExecutableError};
 use super::platform::Platform;
 use super::release::get_releases;
@@ -85,7 +87,13 @@ where
     D: DictGetter,
     A: Api,
 {
-    pub fn new(di: DependencyInjection<P, I, D, A>, version: Option<&str>, writeable_bin_dir: Option<&str>, api: Option<&str>, models: HashMap<String, String>) -> Result<Self, RustruutError> {
+    pub fn new(
+        di: DependencyInjection<P, I, D, A>,
+        version: Option<&str>,
+        writeable_bin_dir: Option<&str>,
+        api: Option<&str>,
+        models: HashMap<String, String>,
+    ) -> Result<Self, RustruutError> {
         if di.api.get_api_path().len() != 0 {
             let config = Config::new(di.clone());
             return Ok(Self {
@@ -125,13 +133,21 @@ where
             }
         }
 
-        let executable = executable.ok_or_else(|| RustruutError::Platform("No executable found for platform".to_string()))?;
-        let version = version_found.ok_or_else(|| RustruutError::Platform("Version not found".to_string()))?;
+        let executable = executable.ok_or_else(|| {
+            RustruutError::Platform("No executable found for platform".to_string())
+        })?;
+        let version = version_found
+            .ok_or_else(|| RustruutError::Platform("Version not found".to_string()))?;
 
         let temp_dir = if let Some(dir) = writeable_bin_dir {
             TempDir::new_in(dir)?
         } else {
-            let home = dirs::home_dir().ok_or_else(|| RustruutError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found")))?;
+            let home = dirs::home_dir().ok_or_else(|| {
+                RustruutError::Io(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Home directory not found",
+                ))
+            })?;
             let goruut_dir = home.join(".goruut");
             std::fs::create_dir_all(&goruut_dir)?;
             TempDir::new_in(goruut_dir)?
@@ -146,13 +162,95 @@ where
         let config_path = temp_dir.path().join("goruut_config.json");
         config.serialize(config_path.to_str().unwrap(), &models)?;
 
-        let process = Command::new(executable_path)
+        // Inside your function
+        let mut child = Command::new(executable_path)
             .arg("--configfile")
             .arg(config_path.to_str().unwrap())
+            .stderr(Stdio::piped()) // Capture stderr
             .spawn()?;
 
-        // Wait for the process to start serving
-        thread::sleep(Duration::from_secs(2));
+        // Take ownership of the child's stderr
+        let stderr = child.stderr.take().expect("Failed to capture stderr");
+
+        // Create a channel for thread communication
+        let (tx, rx) = channel();
+
+        // Spawn a thread to read stderr
+        thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines() {
+                match line {
+                    Ok(line) => {
+                        if line.contains("Serving...") {
+                            tx.send(Some(())).expect("Failed to send message");
+                            return;
+                        }
+                    }
+                    Err(_) => break, // Stop on read error
+                }
+            }
+            // Send None if EOF reached without finding the message
+            tx.send(None).expect("Failed to send message");
+        });
+
+        // Wait for either the message or process exit
+        let result = match rx.recv_timeout(Duration::from_secs(30)) {
+            Ok(Some(())) => {
+                // Found "Serving..." message
+                let s = Self {
+                    policy: di.policy.clone(),
+                    ipa: di.ipa.clone(),
+                    dict_getter: di.dict_getter.clone(),
+                    executable: Some(executable),
+                    platform: Some(platform),
+                    version: Some(version),
+                    process: Some(child),
+                    config: config,
+                };
+                /*
+                        // Send one dummy request and end
+                        let url = s.config.url("tts/phonemize/sentence");
+                        let payload = "{}".to_string();
+
+                        let client = reqwest::blocking::Client::new();
+                        let _ = client.post(&url).json(&payload).send();
+
+                    // Usage - parse from empty JSON
+                    let mut req: requests::PhonemizeSentence = serde_json::from_str("{}")?;
+
+                        req.init();
+
+                        let _ = s.phonemize(req);
+                */
+                return Ok(s);
+            }
+            Ok(None) => {
+                // Stderr closed without finding the message
+                return Err(RustruutError::Process(
+                    "Process exited without serving message".into(),
+                ));
+            }
+            Err(RecvTimeoutError::Timeout) => {
+                // Timeout reached
+                return Err(RustruutError::Process(
+                    "Timeout waiting for serving message".into(),
+                ));
+            }
+            Err(RecvTimeoutError::Disconnected) => {
+                // Thread panicked or closed channel
+                return Err(RustruutError::Process(
+                    "Stderr reader thread disconnected".into(),
+                ));
+            }
+        };
+
+        // Check if process is still running
+        if let Ok(Some(status)) = child.try_wait() {
+            return Err(RustruutError::Process(format!(
+                "Process exited early with status: {}",
+                status
+            )));
+        }
 
         Ok(Self {
             policy: di.policy.clone(),
@@ -161,14 +259,17 @@ where
             executable: Some(executable),
             platform: Some(platform),
             version: Some(version),
-            process: Some(process),
+            process: Some(child),
             config: config,
         })
     }
 
-    pub fn phonemize(&self, req: requests::PhonemizeSentence) -> Result<responses::PhonemizeSentence, RustruutError> {
+    pub fn phonemize(
+        &self,
+        req: requests::PhonemizeSentence,
+    ) -> Result<responses::PhonemizeSentence, RustruutError> {
         let url = self.config.url("tts/phonemize/sentence");
-        
+
         let payload = serde_json::json!(req);
 
         let client = reqwest::blocking::Client::new();
