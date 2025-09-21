@@ -1,4 +1,4 @@
-use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 use crate::di::DependencyInjection;
 use rand::Rng;
 use serde::Serialize;
@@ -21,30 +21,34 @@ struct ConfigData {
     load_models: Option<Vec<LoadModel>>,
 }
 
-pub struct Config<P, I, D>
+pub struct Config<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     policy: P,
     ipa: I,
     dict: D,
+    api: A,
     port: u16,
 }
 
-impl<P, I, D> Config<P, I, D>
+impl<P, I, D, A> Config<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
-    pub fn new(di: DependencyInjection<P, I, D>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A>) -> Self {
         let port = rand::thread_rng().gen_range(1024..=65535);
         Self {
             policy: di.policy.clone(),
             ipa: di.ipa.clone(),
             dict: di.dict_getter.clone(),
+            api: di.api.clone(),
             port: port
         }
     }
@@ -76,6 +80,10 @@ where
     }
 
     pub fn url(&self, subpath: &str) -> String {
-        format!("http://127.0.0.1:{}/{}", self.port, subpath)
+        if self.api.get_api_path().len() == 0 {
+            format!("http://127.0.0.1:{}/{}", self.port, subpath)
+        } else {
+            format!("{}{}/{}", self.api.get_api_path(), self.port, subpath)
+        }
     }
 }

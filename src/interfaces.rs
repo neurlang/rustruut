@@ -15,3 +15,8 @@ pub trait IpaFlavor: Send + Sync + Clone {
 pub trait DictGetter: Send + Sync + Clone {
     fn get(&self, path: &str) -> Option<Vec<u8>>;
 }
+
+/// Trait that provides BE API Path
+pub trait Api: Send + Sync + Clone {
+    fn get_api_path(&self) -> &str;
+}

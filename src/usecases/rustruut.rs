@@ -1,4 +1,4 @@
-use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 use crate::di::DependencyInjection;
 use std::collections::HashMap;
 use std::process::{Child, Command};
@@ -61,11 +61,12 @@ impl ToString for PhonemeResponse {
     }
 }
 
-pub struct Goruut<P, I, D>
+pub struct Goruut<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     policy: P,
     ipa: I,
@@ -74,17 +75,18 @@ where
     platform: Option<Platform>,
     version: Option<String>,
     process: Option<Child>,
-    config: Config<P, I, D>,
+    config: Config<P, I, D, A>,
 }
 
-impl<P, I, D> Goruut<P, I, D>
+impl<P, I, D, A> Goruut<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
-    pub fn new(di: DependencyInjection<P, I, D>, version: Option<&str>, writeable_bin_dir: Option<&str>, api: Option<&str>, models: HashMap<String, String>) -> Result<Self, RustruutError> {
-        if let Some(api_url) = api {
+    pub fn new(di: DependencyInjection<P, I, D, A>, version: Option<&str>, writeable_bin_dir: Option<&str>, api: Option<&str>, models: HashMap<String, String>) -> Result<Self, RustruutError> {
+        if di.api.get_api_path().len() != 0 {
             let config = Config::new(di.clone());
             return Ok(Self {
                 policy: di.policy.clone(),
@@ -180,11 +182,12 @@ where
     }
 }
 
-impl<P, I, D> Drop for Goruut<P, I, D>
+impl<P, I, D, A> Drop for Goruut<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     fn drop(&mut self) {
         if let Some(process) = &mut self.process {

@@ -1,4 +1,4 @@
-use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+use super::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 use crate::models::requests::PhonemizeSentence as Req;
 use crate::models::responses::PhonemizeSentence as Resp;
 use crate::di::DependencyInjection;
@@ -10,23 +10,25 @@ mod test;
 
 /// Public-facing Phonemizer API.
 /// It owns a usecase internally and exposes a simple `sentence` method.
-pub struct Phonemizer<P, I, D>
+pub struct Phonemizer<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
-    usecase: PhonemizeUsecaseImpl<P, I, D>,
+    usecase: PhonemizeUsecaseImpl<P, I, D, A>,
 }
 
-impl<P, I, D> Phonemizer<P, I, D>
+impl<P, I, D, A> Phonemizer<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     /// Construct from DI container.
-    pub fn new(di: DependencyInjection<P, I, D>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A>) -> Self {
         let usecase = PhonemizeUsecaseImpl::new(di);
         Self { usecase }
     }

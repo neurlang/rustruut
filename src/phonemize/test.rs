@@ -71,6 +71,7 @@ mod tests {
             TwoWordPolicy,
             crate::di::default_impls::DummyIpaFlavor::default(),
             crate::di::default_impls::DummyDict::default(),
+            crate::di::default_impls::DummyApi::default(),
         );
 
         let p = Phonemizer::new(di);

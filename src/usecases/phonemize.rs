@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
+use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter, Api};
 use crate::models::{requests, responses};
 use crate::di::DependencyInjection;
 use super::rustruut::{Goruut, RustruutError};
@@ -11,34 +11,38 @@ pub trait PhonemizeUsecase {
 
 /// A concrete phonemize usecase implementation.
 /// Generic over the three DI traits, keeps them around for orchestration.
-pub struct PhonemizeUsecaseImpl<P, I, D>
+pub struct PhonemizeUsecaseImpl<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     policy: P,
     ipa: I,
     dict_getter: D,
+    api: A,
     maxwrds: usize,
-    goruut: Option<Goruut<P, I, D>>,
+    goruut: Option<Goruut<P, I, D, A>>,
     error: Option<RustruutError>,
 }
 
-impl<P, I, D> PhonemizeUsecaseImpl<P, I, D>
+impl<P, I, D, A> PhonemizeUsecaseImpl<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     /// Construct from DI container.
-    pub fn new(di: DependencyInjection<P, I, D>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A>) -> Self {
         let maxwrds = di.policy.get_policy_max_words();
         let models = HashMap::new();
         
         let getter = di.dict_getter.clone();
         let ipa = di.ipa.clone();
 	let policy = di.policy.clone();
+	let api = di.api.clone();
 
         // Create goruut and handle the result properly
         let goruut_result = Goruut::new(di, None, None, None, models);
@@ -53,6 +57,7 @@ where
             policy: policy,
             ipa: ipa,
             dict_getter: getter,
+            api: api,
             maxwrds,
             error,
             goruut,
@@ -60,11 +65,12 @@ where
     }
 }
 
-impl<P, I, D> PhonemizeUsecase for PhonemizeUsecaseImpl<P, I, D>
+impl<P, I, D, A> PhonemizeUsecase for PhonemizeUsecaseImpl<P, I, D, A>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
+    A: Api,
 {
     fn sentence(&self, mut req: requests::PhonemizeSentence) -> Result<responses::PhonemizeSentence, RustruutError> {
         req.init();
