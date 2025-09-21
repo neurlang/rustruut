@@ -16,13 +16,13 @@ mod tests {
     }
 
     #[test]
-    fn test_hebrew_phonemization() {
+    fn test_hebrew_phonemization() -> Result<(), Box<dyn std::error::Error>> {
         let di = DependencyInjection::new();
         let p = Phonemizer::new(di);
 
         let input = "הַכּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּרֶ֫גַע שֶׁבּוֹ אַתָּה מַאֲמִין שֶׁזֶּה אֶפְשָׁרִי!";
-        let currently_expected = "DUMMY DUMMY DUMMY DUMMY DUMMY DUMMY DUMMY DUMMY DUMMY";
-        //let expected = "hakˈoaχ leʃanˈot matχˈil baʁˈeɡa ʃebˈo ʔatˈa maʔamˈin ʃezˈe ʔefʃaʁˈi!";
+        let expected = "כ\u{5bc}\u{5ab}ahox ל\u{5bd}\u{5b0}ʃaˈnot mtˈxile ר\u{5b6}\u{5ab}baˈgaˈa ʃeboˈ aˈta maʔamin ʃzea efʃaˈri!";
+        //let best = "hakˈoaχ leʃanˈot matχˈil baʁˈeɡa ʃebˈo ʔatˈa maʔamˈin ʃezˈe ʔefʃaʁˈi!";
 
         let req = Req {
             ipa_flavors: vec![],
@@ -33,12 +33,13 @@ mod tests {
             split_sentences: false,
         };
 
-        let result = p.sentence(req);
-        assert_eq!(render_response_with_punct(&result), currently_expected);
+        let result = p.sentence(req)?;
+        assert_eq!(render_response_with_punct(&result), expected);
+        Ok(())
     }
 
     #[test]
-    fn smoke_test_default_di() {
+    fn smoke_test_default_di() -> Result<(), Box<dyn std::error::Error>> {
         let di = DependencyInjection::new();
         let p = Phonemizer::new(di);
 
@@ -51,14 +52,15 @@ mod tests {
             split_sentences: false,
         };
 
-        let res = p.sentence(req);
+        let res = p.sentence(req)?;
         assert_eq!(res.words.len(), 2);
         assert_eq!(res.words[0].clean_word, "hello");
         assert_eq!(res.words[1].clean_word, "world");
+        Ok(())
     }
 
     #[test]
-    fn respects_max_words_policy() {
+    fn respects_max_words_policy() -> Result<(), Box<dyn std::error::Error>> {
         struct TwoWordPolicy;
         impl crate::interfaces::PolicyMaxWords for TwoWordPolicy {
             fn get_policy_max_words(&self) -> usize { 2 }
@@ -80,8 +82,9 @@ mod tests {
             split_sentences: false,
         };
 
-        let res = p.sentence(req);
+        let res = p.sentence(req)?;
         assert!(res.error_word_limit_exceeded);
         assert_eq!(res.words.len(), 0);
+        Ok(())
     }
 }
