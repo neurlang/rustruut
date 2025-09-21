@@ -1,7 +1,7 @@
 [package]
 name = "rustruut"
 version = "0.0.2"
-edition = "2025"
+edition = "2024"
 license-file = "LICENSE"
 description = "This version DOES NOT WORK - publish test"
 
