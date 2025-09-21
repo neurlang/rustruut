@@ -40,7 +40,7 @@ impl FromStr for OS {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "android" => Ok(OS::Android),
-            "darwin" => Ok(OS::Darwin),
+            "darwin" | "macos" => Ok(OS::Darwin),  // Add "macos" here
             "linux" => Ok(OS::Linux),
             "windows" => Ok(OS::Windows),
             "freebsd" => Ok(OS::Freebsd),
