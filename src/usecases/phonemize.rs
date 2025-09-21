@@ -1,10 +1,12 @@
+use std::collections::HashMap;
 use crate::interfaces::{PolicyMaxWords, IpaFlavor, DictGetter};
 use crate::models::{requests, responses};
 use crate::di::DependencyInjection;
+use super::rustruut::{Goruut, RustruutError};
 
 /// Trait for phonemizer usecase orchestration (sentence + word).
 pub trait PhonemizeUsecase {
-    fn sentence(&self, req: requests::PhonemizeSentence) -> responses::PhonemizeSentence;
+    fn sentence(&self, req: requests::PhonemizeSentence) -> Result<responses::PhonemizeSentence, RustruutError>;
 }
 
 /// A concrete phonemize usecase implementation.
@@ -19,6 +21,8 @@ where
     ipa: I,
     dict_getter: D,
     maxwrds: usize,
+    goruut: Option<Goruut>,
+    error: Option<RustruutError>,
 }
 
 impl<P, I, D> PhonemizeUsecaseImpl<P, I, D>
@@ -30,11 +34,24 @@ where
     /// Construct from DI container.
     pub fn new(di: DependencyInjection<P, I, D>) -> Self {
         let maxwrds = di.policy.get_policy_max_words();
+        let models = HashMap::new();
+        
+        // Create goruut and handle the result properly
+        let goruut_result = Goruut::new(None, None, None, models);
+        
+        // Extract the result or error
+        let (goruut, error) = match goruut_result {
+            Ok(goruut) => (Some(goruut), None),
+            Err(error) => (None, Some(error)),
+        };
+
         Self {
             policy: di.policy,
             ipa: di.ipa,
             dict_getter: di.dict_getter,
             maxwrds,
+            error,
+            goruut,
         }
     }
 }
@@ -45,53 +62,13 @@ where
     I: IpaFlavor,
     D: DictGetter,
 {
-    fn sentence(&self, mut req: requests::PhonemizeSentence) -> responses::PhonemizeSentence {
+    fn sentence(&self, mut req: requests::PhonemizeSentence) -> Result<responses::PhonemizeSentence, RustruutError> {
         req.init();
-
-        // Split into sentences — dummy implementation, no sentencizer service yet.
-        let sentences = if req.split_sentences && !req.is_reverse {
-            vec![req.sentence.clone()] // TODO: sentencizer
-        } else {
-            vec![req.sentence.clone()]
-        };
-
-        let mut total_words = 0usize;
-        let mut all_words = Vec::new();
-
-        for sentence in sentences {
-            // Dummy word splitting
-            let tokens: Vec<String> = sentence
-                .split_whitespace()
-                .map(|s| s.to_string())
-                .collect();
-
-            total_words += tokens.len();
-            if total_words > self.maxwrds {
-                return responses::PhonemizeSentence {
-                    words: Vec::new(),
-                    error_word_limit_exceeded: true,
-                };
-            }
-
-            // Dummy phonemization: just return "DUMMY"
-            let mut words = Vec::new();
-            for (i, tok) in tokens.iter().enumerate() {
-                words.push(responses::PhonemizeSentenceWord {
-                    clean_word: tok.clone(),
-                    phonetic: "DUMMY".to_string(),
-                    pos_tags: serde_json::from_str("[]").unwrap(),
-                    pre_punct: String::new(),
-                    post_punct: String::new(),
-                    is_first: i == 0,
-                    is_last: i + 1 == tokens.len(),
-                });
-            }
-            all_words.extend(words);
-        }
-
-        responses::PhonemizeSentence {
-            words: all_words,
-            error_word_limit_exceeded: false,
+        
+        // Handle the case where goruut might be None
+        match &self.goruut {
+            Some(goruut) => goruut.phonemize(req),
+            None => Err(RustruutError::Generic("No goruut available and no error stored".to_string()))
         }
     }
 }

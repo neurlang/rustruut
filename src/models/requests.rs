@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Request model for phonemizing a sentence.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PhonemizeSentence {
     #[serde(default)]
     pub ipa_flavors: Vec<String>,

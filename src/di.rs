@@ -52,7 +52,7 @@ pub mod default_impls {
 
     impl PolicyMaxWords for DummyPolicy {
         fn get_policy_max_words(&self) -> usize {
-            usize::MAX
+            9999999
         }
     }
 

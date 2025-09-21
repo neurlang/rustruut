@@ -8,7 +8,7 @@ Like [goruut](https://github.com/neurlang/goruut) except in Rust
 ## Run
 
 ```console
-cargo run --example useage
+cargo run --example usage
 ```
 
 ## Test

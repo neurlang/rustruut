@@ -3,6 +3,7 @@ use crate::models::requests::PhonemizeSentence as Req;
 use crate::models::responses::PhonemizeSentence as Resp;
 use crate::di::DependencyInjection;
 use crate::usecases::phonemize::{PhonemizeUsecase, PhonemizeUsecaseImpl};
+use crate::usecases::rustruut::{RustruutError};
 
 #[cfg(test)]
 mod test;
@@ -31,7 +32,7 @@ where
     }
 
     /// Run phonemization on the sentence request and return a response.
-    pub fn sentence(&self, req: Req) -> Resp {
+    pub fn sentence(&self, req: Req) -> Result<Resp, RustruutError> {
         self.usecase.sentence(req)
     }
 }

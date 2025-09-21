@@ -18,4 +18,9 @@ pub use models::responses::{PhonemizeSentence as PhonemizeSentenceResp, Phonemiz
 // INTERNAL USE
 pub mod usecases {
     pub mod phonemize;
+    pub mod rustruut;
+    pub mod config;
+    pub mod executable;
+    pub mod platform;
+    pub mod release;
 }

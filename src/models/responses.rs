@@ -5,11 +5,16 @@ use serde_json::Value;
 /// response is serialized the raw JSON array is inlined (same behavior as
 /// Go's json.RawMessage).
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "PascalCase")]
 pub struct PhonemizeSentenceWord {
     pub clean_word: String,
     pub phonetic: String,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_null_as_none"
+    )]
     pub pos_tags: Option<Value>,
 
     #[serde(default)]
@@ -23,11 +28,36 @@ pub struct PhonemizeSentenceWord {
     pub is_last: bool,
 }
 
+/// Custom deserializer to handle null values for Option<Value>
+fn deserialize_null_as_none<'de, D>(deserializer: D) -> Result<Option<Value>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Value::deserialize(deserializer)?;
+    match value {
+        Value::Null => Ok(None),
+        _ => Ok(Some(value)),
+    }
+}
+
+/// Custom deserializer to handle null values for Vec<T>
+fn deserialize_null_as_empty_vec<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let opt = Option::<Vec<T>>::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
 
 /// Top-level response.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "PascalCase")]
 pub struct PhonemizeSentence {
-    #[serde(default)]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_null_as_empty_vec"
+    )]
     pub words: Vec<PhonemizeSentenceWord>,
 
     #[serde(rename = "ErrorWordLimitExceeded", default, skip_serializing_if = "std::ops::Not::not")]
