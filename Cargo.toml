@@ -1,9 +1,9 @@
 [package]
 name = "rustruut"
 version = "0.0.2"
-edition = "2024"
+edition = "2021"
 license-file = "LICENSE"
-description = "This version DOES NOT WORK - publish test"
+description = "Text-to-IPA converter and phonetic translator for Rust, powered by the Goruut phonemization engine"
 
 [lib]
 name = "rustruut"
