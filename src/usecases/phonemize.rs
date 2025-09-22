@@ -3,6 +3,19 @@ use crate::di::DependencyInjection;
 use crate::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
 use crate::models::{requests, responses};
 use std::collections::HashMap;
+use std::sync::Arc;
+
+// State enum: either we have a ready Goruut or a stored error from constructor
+enum GoruutState<P, I, D, A>
+where
+    P: PolicyMaxWords,
+    I: IpaFlavor,
+    D: DictGetter,
+    A: Api,
+{
+    Ready(Arc<Goruut<P, I, D, A>>),
+    Failed(Arc<RustruutError>),
+}
 
 /// Trait for phonemizer usecase orchestration (sentence + word).
 pub trait PhonemizeUsecase {
@@ -26,8 +39,7 @@ where
     dict_getter: D,
     api: A,
     maxwrds: usize,
-    goruut: Option<Goruut<P, I, D, A>>,
-    error: Option<RustruutError>,
+    state: Arc<GoruutState<P, I, D, A>>,
 }
 
 impl<P, I, D, A> PhonemizeUsecaseImpl<P, I, D, A>
@@ -51,9 +63,9 @@ where
         let goruut_result = Goruut::new(di, None, None, None, models);
 
         // Extract the result or error
-        let (goruut, error) = match goruut_result {
-            Ok(goruut) => (Some(goruut), None),
-            Err(error) => (None, Some(error)),
+        let state = match goruut_result {
+            Ok(g) => Arc::new(GoruutState::Ready(Arc::new(g))),
+            Err(e) => Arc::new(GoruutState::Failed(Arc::new(e))),
         };
 
         Self {
@@ -62,8 +74,7 @@ where
             dict_getter: getter,
             api: api,
             maxwrds,
-            error,
-            goruut,
+            state,
         }
     }
 }
@@ -81,12 +92,12 @@ where
     ) -> Result<responses::PhonemizeSentence, RustruutError> {
         req.init();
 
-        // Handle the case where goruut might be None
-        match &self.goruut {
-            Some(goruut) => goruut.phonemize(req),
-            None => Err(RustruutError::Generic(
-                "No goruut available and no error stored".to_string(),
-            )),
+        // Handle the case where goruut might be errored from constructor
+        match &*self.state {
+            GoruutState::Ready(g) => g.phonemize(req),
+            GoruutState::Failed(err) => {
+                Err(RustruutError::Generic(format!("goruut not available: {}", err)))
+            },
         }
     }
 }

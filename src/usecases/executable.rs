@@ -3,6 +3,8 @@ use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+use std::time::Duration;
+use reqwest::blocking::Client;
 
 use super::platform::{Architecture, OS};
 
@@ -93,7 +95,23 @@ impl Executable {
         for url_prefix in &self.servers {
             let url = format!("{}{}", url_prefix, self.file_name_public());
 
-            let response = match reqwest::blocking::get(&url) {
+            const BYTES_PER_SEC: u64 = 100_000;
+
+            // ceil(file_size / BYTES_PER_SEC)
+            let seconds = (self.size + BYTES_PER_SEC - 1) / BYTES_PER_SEC;
+            let timeout = Duration::from_secs(seconds.max(1) as u64);
+
+            let client = match Client::builder()
+                .timeout(timeout)
+                .build() {
+                Ok(client) => client,
+                Err(e) => {
+                    last_error = Some(e.to_string());
+                    continue;
+                }
+            };
+
+            let response = match client.get(&url).send() {
                 Ok(resp) => resp,
                 Err(e) => {
                     last_error = Some(e.to_string());
