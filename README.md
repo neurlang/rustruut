@@ -169,4 +169,15 @@ Not possible currently (TODO)
 
 ### Configure a model download directory for faster startup
 
-Not possible currently (TODO)
+Instead of normal DI use this:
+
+```rust
+// build DI with defaults (home folder implementations)
+let di = DependencyInjection::with_parts(
+    di::default_impls::DummyPolicy::default(),
+    di::default_impls::DummyIpaFlavor::default(),
+    di::default_impls::DummyDict::default(),
+    di::default_impls::DummyApi::default(),
+    di::custom_impls::CustomFolder::default(),
+);
+```
