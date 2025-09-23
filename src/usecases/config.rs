@@ -1,5 +1,5 @@
 use crate::di::DependencyInjection;
-use crate::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
 use rand::Rng;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -21,28 +21,31 @@ struct ConfigData {
     load_models: Option<Vec<LoadModel>>,
 }
 
-pub struct Config<P, I, D, A>
+pub struct Config<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     policy: P,
     ipa: I,
     dict: D,
     api: A,
+    folder: F,
     port: u16,
 }
 
-impl<P, I, D, A> Config<P, I, D, A>
+impl<P, I, D, A, F> Config<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
-    pub fn new(di: DependencyInjection<P, I, D, A>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A, F>) -> Self {
         let port = rand::thread_rng().gen_range(1024..=65535);
         Self {
             policy: di.policy.clone(),
@@ -50,6 +53,7 @@ where
             dict: di.dict_getter.clone(),
             api: di.api.clone(),
             port: port,
+            folder: di.folder.clone(),
         }
     }
 
@@ -89,5 +93,9 @@ where
         } else {
             format!("{}{}/{}", self.api.get_api_path(), self.port, subpath)
         }
+    }
+
+    pub fn get_port(&self) -> u16 {
+        return self.port;
     }
 }

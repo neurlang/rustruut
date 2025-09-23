@@ -20,3 +20,8 @@ pub trait DictGetter: Send + Sync + Clone {
 pub trait Api: Send + Sync + Clone {
     fn get_api_path(&self) -> &str;
 }
+
+/// Trait that provides Download folder path
+pub trait Folder: Send + Sync + Clone {
+    fn get_download_dir(&self) -> Option<&str>;
+}

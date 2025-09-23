@@ -1,10 +1,13 @@
 use crate::di::DependencyInjection;
-use crate::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{channel, RecvTimeoutError};
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use tempfile::TempDir;
@@ -63,12 +66,16 @@ impl ToString for PhonemeResponse {
     }
 }
 
-pub struct Goruut<P, I, D, A>
+// A global mutex used to protect downloading (critical section)
+static DOWNLOAD_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+
+pub struct Goruut<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     policy: P,
     ipa: I,
@@ -77,18 +84,28 @@ where
     platform: Option<Platform>,
     version: Option<String>,
     process: Option<Child>,
-    config: Config<P, I, D, A>,
+    config: Config<P, I, D, A, F>,
 }
 
-impl<P, I, D, A> Goruut<P, I, D, A>
+impl<P, I, D, A, F> Goruut<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
+    fn download_critical(executable: &Executable, p: &Path) -> Result<PathBuf, RustruutError> {
+        let _guard = DOWNLOAD_LOCK.lock().unwrap();
+        let executable_path = match executable.exists(p) {
+            Ok(path) => path,
+            Err(_) => executable.download(p)?,
+        };
+        return Ok(executable_path);
+    }
+
     pub fn new(
-        di: DependencyInjection<P, I, D, A>,
+        di: DependencyInjection<P, I, D, A, F>,
         version: Option<&str>,
         writeable_bin_dir: Option<&str>,
         api: Option<&str>,
@@ -139,9 +156,9 @@ where
         let version = version_found
             .ok_or_else(|| RustruutError::Platform("Version not found".to_string()))?;
 
-        let temp_dir = if let Some(dir) = writeable_bin_dir {
-            TempDir::new_in(dir)?
-        } else {
+        let temp_dir = if writeable_bin_dir == None {
+            std::env::temp_dir()
+        } else if writeable_bin_dir.as_deref().map_or(true, |s| s.is_empty()) {
             let home = dirs::home_dir().ok_or_else(|| {
                 RustruutError::Io(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
@@ -150,16 +167,15 @@ where
             })?;
             let goruut_dir = home.join(".goruut");
             std::fs::create_dir_all(&goruut_dir)?;
-            TempDir::new_in(goruut_dir)?
+            goruut_dir
+        } else {
+            PathBuf::from(writeable_bin_dir.unwrap_or(""))
         };
 
-        let executable_path = match executable.exists(temp_dir.path()) {
-            Ok(path) => path,
-            Err(_) => executable.download(temp_dir.path())?,
-        };
+        let executable_path = Self::download_critical(&executable, &temp_dir)?;
 
         let config = Config::new(di.clone());
-        let config_path = temp_dir.path().join("goruut_config.json");
+        let config_path = temp_dir.join(format!("goruut_config_{}.json", config.get_port()));
         config.serialize(config_path.to_str().unwrap(), &models)?;
 
         // Inside your function
@@ -283,12 +299,13 @@ where
     }
 }
 
-impl<P, I, D, A> Drop for Goruut<P, I, D, A>
+impl<P, I, D, A, F> Drop for Goruut<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     fn drop(&mut self) {
         if let Some(process) = &mut self.process {

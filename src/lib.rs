@@ -10,7 +10,7 @@ pub mod models {
 }
 
 pub use di::DependencyInjection;
-pub use interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+pub use interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
 pub use models::requests::PhonemizeSentence as PhonemizeSentenceReq;
 pub use models::responses::{PhonemizeSentence as PhonemizeSentenceResp, PhonemizeSentenceWord};
 pub use phonemize::Phonemizer;

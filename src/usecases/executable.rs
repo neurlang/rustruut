@@ -1,10 +1,12 @@
+use indicatif::style::TemplateError;
+use indicatif::{ProgressBar, ProgressStyle};
+use reqwest::blocking::Client;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::io::{self, copy, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use thiserror::Error;
 use std::time::Duration;
-use reqwest::blocking::Client;
+use thiserror::Error;
 
 use super::platform::{Architecture, OS};
 
@@ -25,6 +27,8 @@ pub enum ExecutableError {
     Verification(String),
     #[error("Download error: {0}")]
     Download(String),
+    #[error("Progress bar error: {0}")]
+    Progress(#[from] TemplateError),
 }
 
 impl Executable {
@@ -101,9 +105,7 @@ impl Executable {
             let seconds = (self.size + BYTES_PER_SEC - 1) / BYTES_PER_SEC;
             let timeout = Duration::from_secs(seconds.max(1) as u64);
 
-            let client = match Client::builder()
-                .timeout(timeout)
-                .build() {
+            let client = match Client::builder().timeout(timeout).build() {
                 Ok(client) => client,
                 Err(e) => {
                     last_error = Some(e.to_string());
@@ -124,11 +126,21 @@ impl Executable {
                 continue;
             }
 
+            let pb = ProgressBar::new(self.size);
+            pb.set_style(
+                ProgressStyle::with_template(
+                    "[{elapsed_precise}] {bar:40.cyan/blue} {bytes}/{total_bytes} ({eta})",
+                )?
+                .progress_chars("##-"),
+            );
+
+            let mut source = response;
+            let mut reader = pb.wrap_read(BufReader::new(&mut source));
             let mut file = File::create(&temp_file_path)?;
-            let content = response
-                .bytes()
-                .map_err(|e| ExecutableError::Download(e.to_string()))?;
-            file.write_all(&content)?;
+
+            copy(&mut reader, &mut file)?;
+
+            pb.finish_with_message("Download complete");
 
             // Verify the downloaded file
             match self.exists(temp_dir) {

@@ -1,19 +1,20 @@
 use super::rustruut::{Goruut, RustruutError};
 use crate::di::DependencyInjection;
-use crate::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
 use crate::models::{requests, responses};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 // State enum: either we have a ready Goruut or a stored error from constructor
-enum GoruutState<P, I, D, A>
+enum GoruutState<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
-    Ready(Arc<Goruut<P, I, D, A>>),
+    Ready(Arc<Goruut<P, I, D, A, F>>),
     Failed(Arc<RustruutError>),
 }
 
@@ -27,30 +28,32 @@ pub trait PhonemizeUsecase {
 
 /// A concrete phonemize usecase implementation.
 /// Generic over the three DI traits, keeps them around for orchestration.
-pub struct PhonemizeUsecaseImpl<P, I, D, A>
+pub struct PhonemizeUsecaseImpl<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     policy: P,
     ipa: I,
     dict_getter: D,
     api: A,
     maxwrds: usize,
-    state: Arc<GoruutState<P, I, D, A>>,
+    state: Arc<GoruutState<P, I, D, A, F>>,
 }
 
-impl<P, I, D, A> PhonemizeUsecaseImpl<P, I, D, A>
+impl<P, I, D, A, F> PhonemizeUsecaseImpl<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     /// Construct from DI container.
-    pub fn new(di: DependencyInjection<P, I, D, A>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A, F>) -> Self {
         let maxwrds = di.policy.get_policy_max_words();
         let models = HashMap::new();
 
@@ -58,9 +61,10 @@ where
         let ipa = di.ipa.clone();
         let policy = di.policy.clone();
         let api = di.api.clone();
+        let folder = di.folder.clone();
 
         // Create goruut and handle the result properly
-        let goruut_result = Goruut::new(di, None, None, None, models);
+        let goruut_result = Goruut::new(di, None, folder.get_download_dir(), None, models);
 
         // Extract the result or error
         let state = match goruut_result {
@@ -79,12 +83,13 @@ where
     }
 }
 
-impl<P, I, D, A> PhonemizeUsecase for PhonemizeUsecaseImpl<P, I, D, A>
+impl<P, I, D, A, F> PhonemizeUsecase for PhonemizeUsecaseImpl<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     fn sentence(
         &self,
@@ -95,9 +100,10 @@ where
         // Handle the case where goruut might be errored from constructor
         match &*self.state {
             GoruutState::Ready(g) => g.phonemize(req),
-            GoruutState::Failed(err) => {
-                Err(RustruutError::Generic(format!("goruut not available: {}", err)))
-            },
+            GoruutState::Failed(err) => Err(RustruutError::Generic(format!(
+                "goruut not available: {}",
+                err
+            ))),
         }
     }
 }

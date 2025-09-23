@@ -1,12 +1,21 @@
 // examples/usage.rs
-use rustruut::{DependencyInjection, Phonemizer, models::requests::PhonemizeSentence};
+use rustruut::{
+    di, interfaces::Folder, models::requests::PhonemizeSentence, DependencyInjection, Phonemizer,
+};
 use serde_json;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // example input (Hebrew)
     let input = "הַכּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּרֶ֫גַע שֶׁבּוֹ אַתָּה מַאֲמִין שֶׁזֶּה אֶפְשָׁרִי!";
 
-    // build DI with defaults (dummy implementations)
+    // build DI with defaults (home folder implementations)
+    //let di = DependencyInjection::with_parts(
+    //    di::default_impls::DummyPolicy::default(),
+    //    di::default_impls::DummyIpaFlavor::default(),
+    //    di::default_impls::DummyDict::default(),
+    //    di::default_impls::DummyApi::default(),
+    //    di::custom_impls::CustomFolder::default(),
+    //);
     let di = DependencyInjection::new();
 
     // construct the phonemizer (types are inferred from the DI)

@@ -1,4 +1,4 @@
-use super::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+use super::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
 
 /// A small, explicit, compile-time DI container that simply holds the three
 /// expected components. The generic parameters allow compile-time wiring of
@@ -9,16 +9,19 @@ pub struct DependencyInjection<
     I = crate::di::default_impls::DummyIpaFlavor,
     D = crate::di::default_impls::DummyDict,
     A = crate::di::default_impls::DummyApi,
+    F = crate::di::default_impls::DummyFolder,
 > where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
     pub policy: P,
     pub ipa: I,
     pub dict_getter: D,
     pub api: A,
+    pub folder: F,
 }
 
 impl
@@ -27,6 +30,7 @@ impl
         crate::di::default_impls::DummyIpaFlavor,
         crate::di::default_impls::DummyDict,
         crate::di::default_impls::DummyApi,
+        crate::di::default_impls::DummyFolder,
     >
 {
     /// Creates a DI container pre-filled with dummy implementations.
@@ -36,23 +40,41 @@ impl
             ipa: crate::di::default_impls::DummyIpaFlavor::default(),
             dict_getter: crate::di::default_impls::DummyDict::default(),
             api: crate::di::default_impls::DummyApi::default(),
+            folder: crate::di::default_impls::DummyFolder::default(),
         }
     }
 }
 
-impl<P, I, D, A> DependencyInjection<P, I, D, A>
+impl<P, I, D, A, F> DependencyInjection<P, I, D, A, F>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
+    F: Folder,
 {
-    pub fn with_parts(policy: P, ipa: I, dict_getter: D, api: A) -> Self {
+    pub fn with_parts(policy: P, ipa: I, dict_getter: D, api: A, folder: F) -> Self {
         Self {
             policy,
             ipa,
             dict_getter,
             api,
+            folder,
+        }
+    }
+}
+
+/// Custom implementations are provided here so that callers can use
+/// `DependencyInjection::new()` to get customized defaults.
+pub mod custom_impls {
+    use super::super::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
+
+    #[derive(Debug, Clone, Default)]
+    pub struct CustomFolder;
+
+    impl Folder for CustomFolder {
+        fn get_download_dir(&self) -> Option<&str> {
+            Some("")
         }
     }
 }
@@ -60,7 +82,7 @@ where
 /// Default/dummy implementations are provided here so that callers can use
 /// `DependencyInjection::new()` to get sensible defaults.
 pub mod default_impls {
-    use super::super::interfaces::{Api, DictGetter, IpaFlavor, PolicyMaxWords};
+    use super::super::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
     use std::collections::HashMap;
 
     #[derive(Debug, Clone, Default)]
@@ -96,6 +118,15 @@ pub mod default_impls {
     impl Api for DummyApi {
         fn get_api_path(&self) -> &str {
             ""
+        }
+    }
+
+    #[derive(Debug, Clone, Default)]
+    pub struct DummyFolder;
+
+    impl Folder for DummyFolder {
+        fn get_download_dir(&self) -> Option<&str> {
+            None
         }
     }
 }
