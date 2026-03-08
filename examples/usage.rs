@@ -50,5 +50,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resp2 = phonemizer2.sentence(req2)?;
     println!("{}", serde_json::to_string_pretty(&resp2).unwrap());
 
+    // Example 3: Using CustomApi with a specific API path
+    println!("\n=== Example 3: DI with CustomApi ===");
+    let di_with_api = DependencyInjection {
+        policy: di::default_impls::DummyPolicy,
+        ipa: di::default_impls::DummyIpaFlavor,
+        dict_getter: di::default_impls::DummyDict,
+        api: di::custom_impls::CustomApi::new("http://localhost:8080"),
+        folder: di::default_impls::DummyFolder,
+        version: di::default_impls::DummyVersion,
+    };
+
+    let phonemizer3 = Phonemizer::new(di_with_api);
+
+    let req3 = PhonemizeSentence {
+        ipa_flavors: Vec::new(),
+        language: "Hebrew2".to_string(),
+        languages: Vec::new(),
+        sentence: input.to_string(),
+        is_reverse: false,
+        split_sentences: false,
+    };
+
+    let resp3 = phonemizer3.sentence(req3)?;
+    println!("{}", serde_json::to_string_pretty(&resp3).unwrap());
+
     Ok(())
 }

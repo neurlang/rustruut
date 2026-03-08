@@ -30,6 +30,19 @@ use super::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords, Vers
 ///     di::custom_impls::CustomVersion::new("0.7.0"),
 /// );
 /// ```
+///
+/// Using custom API path:
+/// ```
+/// use rustruut::{DependencyInjection, di};
+/// let di = DependencyInjection {
+///     policy: di::default_impls::DummyPolicy,
+///     ipa: di::default_impls::DummyIpaFlavor,
+///     dict_getter: di::default_impls::DummyDict,
+///     api: di::custom_impls::CustomApi::new("http://localhost:8080"),
+///     folder: di::default_impls::DummyFolder,
+///     version: di::default_impls::DummyVersion,
+/// };
+/// ```
 #[derive(Debug, Clone)]
 pub struct DependencyInjection<
     P = crate::di::default_impls::DummyPolicy,
@@ -132,6 +145,33 @@ pub mod custom_impls {
     impl Version for CustomVersion {
         fn get_version(&self) -> Option<&str> {
             Some(&self.version)
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct CustomApi {
+        api_path: String,
+    }
+
+    impl CustomApi {
+        pub fn new(api_path: &str) -> Self {
+            Self {
+                api_path: api_path.to_string(),
+            }
+        }
+    }
+
+    impl Default for CustomApi {
+        fn default() -> Self {
+            Self {
+                api_path: String::new(),
+            }
+        }
+    }
+
+    impl Api for CustomApi {
+        fn get_api_path(&self) -> &str {
+            &self.api_path
         }
     }
 }
