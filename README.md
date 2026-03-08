@@ -200,10 +200,11 @@ Instead of normal DI use this:
 ```rust
 // build DI with defaults (home folder implementations)
 let di = DependencyInjection::with_parts(
-    di::default_impls::DummyPolicy::default(),
-    di::default_impls::DummyIpaFlavor::default(),
-    di::default_impls::DummyDict::default(),
-    di::default_impls::DummyApi::default(),
+    di::default_impls::DummyPolicy,
+    di::default_impls::DummyIpaFlavor,
+    di::default_impls::DummyDict,
+    di::default_impls::DummyApi,
     di::custom_impls::CustomFolder::default(),
+    di::default_impls::DummyVersion::default(),
 );
 ```
