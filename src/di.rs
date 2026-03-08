@@ -136,8 +136,9 @@ pub mod custom_impls {
 
     impl Default for CustomVersion {
         fn default() -> Self {
+            let version = std::env::var("RUSTRUUT_VERSION").ok();
             Self {
-                version: env!("RUSTRUUT_VERSION").to_string(),
+                version: version.unwrap_or_default(),
             }
         }
     }
