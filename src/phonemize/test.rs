@@ -127,7 +127,7 @@ mod tests {
         // Note: This test will only pass if the external API is actually available
         // In a real scenario, you might want to mock the HTTP client
         let result = p.sentence(req);
-        
+
         // We just verify the API was constructed correctly, not that it succeeds
         // (since the external API may not be available in test environment)
         match result {

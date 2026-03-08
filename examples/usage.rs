@@ -1,7 +1,5 @@
 // examples/usage.rs
-use rustruut::{
-    di, models::requests::PhonemizeSentence, DependencyInjection, Phonemizer,
-};
+use rustruut::{di, models::requests::PhonemizeSentence, DependencyInjection, Phonemizer};
 use serde_json;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
