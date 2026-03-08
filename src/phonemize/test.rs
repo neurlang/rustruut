@@ -17,11 +17,18 @@ mod tests {
 
     #[test]
     fn test_hebrew_phonemization() -> Result<(), Box<dyn std::error::Error>> {
-        let di: DependencyInjection = DependencyInjection::new();
+        let di = DependencyInjection::with_parts(
+            crate::di::default_impls::DummyPolicy,
+            crate::di::default_impls::DummyIpaFlavor,
+            crate::di::default_impls::DummyDict,
+            crate::di::default_impls::DummyApi,
+            crate::di::custom_impls::CustomFolder::default(),
+            crate::di::custom_impls::CustomVersion::new("v0.7.0"),
+        );
         let p = Phonemizer::new(di);
 
         let input = "הַכּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּרֶ֫גַע שֶׁבּוֹ אַתָּה מַאֲמִין שֶׁזֶּה אֶפְשָׁרִי!";
-        let expected = "כ\u{5bc}\u{5ab}ahox ל\u{5bd}\u{5b0}ʃaˈnot mtˈxile ר\u{5b6}\u{5ab}baˈgaˈa ʃeboˈ aˈta maʔamin ʃzea efʃaˈri!";
+        let expected = "כ\u{5bc}\u{5ab}ehoax ל\u{5bd}\u{5b0}ʃaˈnot maitxel ב\u{5bc}\u{5b8}ר\u{5b6}\u{5ab}gaˈʔ eˈʃaˈbˈ aˈta א\u{5b2}mmiˈn ז\u{5bc}\u{5b6}ʃee ש\u{5c1}\u{5b8}efriˈ!";
         //let best = "hakˈoaχ leʃanˈot matχˈil baʁˈeɡa ʃebˈo ʔatˈa maʔamˈin ʃezˈe ʔefʃaʁˈi!";
 
         let req = Req {
