@@ -27,7 +27,7 @@ use super::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords, Vers
 ///     di::default_impls::DummyDict,
 ///     di::default_impls::DummyApi,
 ///     di::default_impls::DummyFolder,
-///     di::custom_impls::CustomVersion::new("0.7.0"),
+///     di::custom_impls::CustomVersion::new("v0.7.0"),
 /// );
 /// ```
 ///

@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dict_getter: di::default_impls::DummyDict,
         api: di::default_impls::DummyApi,
         folder: di::default_impls::DummyFolder,
-        version: di::custom_impls::CustomVersion::new("0.7.0"),
+        version: di::custom_impls::CustomVersion::new("v0.7.0"),
     };
 
     let phonemizer2 = Phonemizer::new(di_with_version);

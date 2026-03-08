@@ -85,9 +85,9 @@ let di = DependencyInjection::with_parts(
     di::default_impls::DummyDict,
     di::default_impls::DummyApi,
     di::default_impls::DummyFolder,
-    di::custom_impls::CustomVersion::new("0.7.0"),
+    di::custom_impls::CustomVersion::new("v0.7.0"),
 );
-// version.get_version() returns Some("0.7.0")
+// version.get_version() returns Some("v0.7.0")
 ```
 
 ### Using CustomVersion with Package Version
