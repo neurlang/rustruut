@@ -92,10 +92,13 @@ where
     }
 
     pub fn url(&self, subpath: &str) -> String {
-        if self.api.get_api_path().len() == 0 {
+        let api_path = self.api.get_api_path();
+        if api_path.is_empty() {
             format!("http://127.0.0.1:{}/{}", self.port, subpath)
         } else {
-            format!("{}{}/{}", self.api.get_api_path(), self.port, subpath)
+            // For external APIs, use the path as-is without appending port
+            let base = api_path.trim_end_matches('/');
+            format!("{}/{}", base, subpath)
         }
     }
 

@@ -38,7 +38,7 @@ use super::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords, Vers
 ///     policy: di::default_impls::DummyPolicy,
 ///     ipa: di::default_impls::DummyIpaFlavor,
 ///     dict_getter: di::default_impls::DummyDict,
-///     api: di::custom_impls::CustomApi::new("http://localhost:8080"),
+///     api: di::custom_impls::CustomApi::new("https://hashtron.cloud"),
 ///     folder: di::default_impls::DummyFolder,
 ///     version: di::default_impls::DummyVersion,
 /// };

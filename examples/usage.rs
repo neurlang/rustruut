@@ -1,6 +1,6 @@
 // examples/usage.rs
 use rustruut::{
-    di, interfaces::Folder, models::requests::PhonemizeSentence, DependencyInjection, Phonemizer,
+    di, models::requests::PhonemizeSentence, DependencyInjection, Phonemizer,
 };
 use serde_json;
 
@@ -51,12 +51,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", serde_json::to_string_pretty(&resp2).unwrap());
 
     // Example 3: Using CustomApi with a specific API path
-    println!("\n=== Example 3: DI with CustomApi ===");
+    println!("\n=== Example 3: DI with CustomApi (external API) ===");
     let di_with_api = DependencyInjection {
         policy: di::default_impls::DummyPolicy,
         ipa: di::default_impls::DummyIpaFlavor,
         dict_getter: di::default_impls::DummyDict,
-        api: di::custom_impls::CustomApi::new("http://localhost:8080"),
+        api: di::custom_impls::CustomApi::new("https://hashtron.cloud"),
         folder: di::default_impls::DummyFolder,
         version: di::default_impls::DummyVersion,
     };

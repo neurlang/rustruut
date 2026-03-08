@@ -183,7 +183,29 @@ let di = DependencyInjection {
 
 ### Use an online inference API
 
-Possible but need explain (TODO)
+Use `CustomApi` to connect to an external API endpoint instead of downloading and running the executable locally:
+
+```rust
+use rustruut::{DependencyInjection, di};
+
+let di = DependencyInjection::with_parts(
+    di::default_impls::DummyPolicy,
+    di::default_impls::DummyIpaFlavor,
+    di::default_impls::DummyDict,
+    di::custom_impls::CustomApi::new("https://hashtron.cloud"),
+    di::default_impls::DummyFolder,
+    di::default_impls::DummyVersion,
+);
+
+let phonemizer = Phonemizer::new(di);
+// Use phonemizer as normal - it will make requests to the external API
+```
+
+This is useful for:
+- Avoiding local executable downloads
+- Using a centralized inference server
+- Reducing startup time
+- Sharing resources across multiple clients
 
 ---
 
