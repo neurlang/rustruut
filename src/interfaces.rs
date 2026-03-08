@@ -25,3 +25,8 @@ pub trait Api: Send + Sync + Clone {
 pub trait Folder: Send + Sync + Clone {
     fn get_download_dir(&self) -> Option<&str>;
 }
+
+/// Trait that provides version information
+pub trait Version: Send + Sync + Clone {
+    fn get_version(&self) -> Option<&str>;
+}

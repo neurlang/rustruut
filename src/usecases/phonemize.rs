@@ -1,20 +1,21 @@
 use super::rustruut::{Goruut, RustruutError};
 use crate::di::DependencyInjection;
-use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
+use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords, Version};
 use crate::models::{requests, responses};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 // State enum: either we have a ready Goruut or a stored error from constructor
-enum GoruutState<P, I, D, A, F>
+enum GoruutState<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
-    Ready(Arc<Goruut<P, I, D, A, F>>),
+    Ready(Arc<Goruut<P, I, D, A, F, V>>),
     Failed(Arc<RustruutError>),
 }
 
@@ -27,69 +28,82 @@ pub trait PhonemizeUsecase {
 }
 
 /// A concrete phonemize usecase implementation.
-/// Generic over the three DI traits, keeps them around for orchestration.
-pub struct PhonemizeUsecaseImpl<P, I, D, A, F>
+/// Generic over the DI traits, keeps them around for orchestration.
+pub struct PhonemizeUsecaseImpl<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     policy: P,
     ipa: I,
     dict_getter: D,
     api: A,
+    version: V,
     maxwrds: usize,
-    state: Arc<GoruutState<P, I, D, A, F>>,
+    state: Arc<GoruutState<P, I, D, A, F, V>>,
 }
 
-impl<P, I, D, A, F> PhonemizeUsecaseImpl<P, I, D, A, F>
+impl<P, I, D, A, F, V> PhonemizeUsecaseImpl<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     /// Construct from DI container.
-    pub fn new(di: DependencyInjection<P, I, D, A, F>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A, F, V>) -> Self {
         let maxwrds = di.policy.get_policy_max_words();
         let models = HashMap::new();
 
-        let getter = di.dict_getter.clone();
-        let ipa = di.ipa.clone();
+        let version_str = di.version.clone().get_version().map(|s| s.to_string());
+        let folder_dir = di.folder.get_download_dir().map(|s| s.to_string());
+        let api_path = di.api.get_api_path().to_string();
+
+        let version = if version_str.is_none() && api_path.is_empty() {
+            None
+        } else {
+            version_str.as_deref()
+        };
+
         let policy = di.policy.clone();
+        let ipa = di.ipa.clone();
+        let dict_getter = di.dict_getter.clone();
         let api = di.api.clone();
-        let folder = di.folder.clone();
+        let version_provider = di.version.clone();
 
-        // Create goruut and handle the result properly
-        let goruut_result = Goruut::new(di, None, folder.get_download_dir(), None, models);
+        let goruut_result = Goruut::new(di, version, folder_dir.as_deref(), None, models);
 
-        // Extract the result or error
         let state = match goruut_result {
             Ok(g) => Arc::new(GoruutState::Ready(Arc::new(g))),
             Err(e) => Arc::new(GoruutState::Failed(Arc::new(e))),
         };
 
         Self {
-            policy: policy,
-            ipa: ipa,
-            dict_getter: getter,
-            api: api,
+            policy,
+            ipa,
+            dict_getter,
+            api,
+            version: version_provider,
             maxwrds,
             state,
         }
     }
 }
 
-impl<P, I, D, A, F> PhonemizeUsecase for PhonemizeUsecaseImpl<P, I, D, A, F>
+impl<P, I, D, A, F, V> PhonemizeUsecase for PhonemizeUsecaseImpl<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     fn sentence(
         &self,
@@ -97,7 +111,6 @@ where
     ) -> Result<responses::PhonemizeSentence, RustruutError> {
         req.init();
 
-        // Handle the case where goruut might be errored from constructor
         match &*self.state {
             GoruutState::Ready(g) => g.phonemize(req),
             GoruutState::Failed(err) => Err(RustruutError::Generic(format!(
@@ -110,6 +123,13 @@ where
 
 /// Default constructor for dummy implementation.
 pub fn new_default_usecase() -> impl PhonemizeUsecase {
-    let di = DependencyInjection::new();
+    let di = crate::di::DependencyInjection::<
+        crate::di::default_impls::DummyPolicy,
+        crate::di::default_impls::DummyIpaFlavor,
+        crate::di::default_impls::DummyDict,
+        crate::di::default_impls::DummyApi,
+        crate::di::default_impls::DummyFolder,
+        crate::di::default_impls::DummyVersion,
+    >::new();
     PhonemizeUsecaseImpl::new(di)
 }

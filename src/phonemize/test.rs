@@ -17,7 +17,7 @@ mod tests {
 
     #[test]
     fn test_hebrew_phonemization() -> Result<(), Box<dyn std::error::Error>> {
-        let di = DependencyInjection::new();
+        let di: DependencyInjection = DependencyInjection::new();
         let p = Phonemizer::new(di);
 
         let input = "הַכּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּרֶ֫גַע שֶׁבּוֹ אַתָּה מַאֲמִין שֶׁזֶּה אֶפְשָׁרִי!";
@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn smoke_test_default_di() -> Result<(), Box<dyn std::error::Error>> {
-        let di = DependencyInjection::new();
+        let di: DependencyInjection = DependencyInjection::new();
         let p = Phonemizer::new(di);
 
         let req = Req {
@@ -75,6 +75,7 @@ mod tests {
             crate::di::default_impls::DummyDict::default(),
             crate::di::default_impls::DummyApi::default(),
             crate::di::default_impls::DummyFolder::default(),
+            crate::di::default_impls::DummyVersion::default(),
         );
 
         let p = Phonemizer::new(di);

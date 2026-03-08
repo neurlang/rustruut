@@ -6,22 +6,13 @@ use serde_json;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // example input (Hebrew)
-    let input = "הַכּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּרֶ֫גַע שֶׁבּוֹ אַתָּה מַאֲמִין שֶׁזֶּה אֶפְשָׁרִי!";
+    let input = "הַכּ֫וֹחַ לְֽשַׁנּוֹת מַתְחִיל בָּרֶ֫גַע שֶׁבּוֹ אַתָּה מַאֲמִין שֶׁזֶּה אֶפְשָׁרִי!";
 
-    // build DI with defaults (home folder implementations)
-    //let di = DependencyInjection::with_parts(
-    //    di::default_impls::DummyPolicy::default(),
-    //    di::default_impls::DummyIpaFlavor::default(),
-    //    di::default_impls::DummyDict::default(),
-    //    di::default_impls::DummyApi::default(),
-    //    di::custom_impls::CustomFolder::default(),
-    //);
-    let di = DependencyInjection::new();
-
-    // construct the phonemizer (types are inferred from the DI)
+    // Example 1: Using default DI with DummyVersion (returns None)
+    println!("=== Example 1: Default DI with DummyVersion ===");
+    let di: DependencyInjection = DependencyInjection::new();
     let phonemizer = Phonemizer::new(di);
 
-    // build the request model (matches your Rust request struct)
     let req = PhonemizeSentence {
         ipa_flavors: Vec::new(),
         language: "Hebrew2".to_string(),
@@ -31,11 +22,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         split_sentences: false,
     };
 
-    // run the phonemizer
     let resp = phonemizer.sentence(req)?;
-
-    // pretty-print JSON response
     println!("{}", serde_json::to_string_pretty(&resp).unwrap());
+
+    // Example 2: Using CustomVersion with a specific version string
+    println!("\n=== Example 2: DI with CustomVersion ===");
+    let di_with_version = DependencyInjection {
+        policy: di::default_impls::DummyPolicy,
+        ipa: di::default_impls::DummyIpaFlavor,
+        dict_getter: di::default_impls::DummyDict,
+        api: di::default_impls::DummyApi,
+        folder: di::default_impls::DummyFolder,
+        version: di::custom_impls::CustomVersion::new("0.7.0"),
+    };
+
+    let phonemizer2 = Phonemizer::new(di_with_version);
+
+    let req2 = PhonemizeSentence {
+        ipa_flavors: Vec::new(),
+        language: "Hebrew2".to_string(),
+        languages: Vec::new(),
+        sentence: input.to_string(),
+        is_reverse: false,
+        split_sentences: false,
+    };
+
+    let resp2 = phonemizer2.sentence(req2)?;
+    println!("{}", serde_json::to_string_pretty(&resp2).unwrap());
 
     Ok(())
 }

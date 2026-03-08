@@ -1,5 +1,5 @@
 use crate::di::DependencyInjection;
-use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
+use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords, Version};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -69,31 +69,34 @@ impl ToString for PhonemeResponse {
 // A global mutex used to protect downloading (critical section)
 static DOWNLOAD_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
-pub struct Goruut<P, I, D, A, F>
+pub struct Goruut<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     policy: P,
     ipa: I,
     dict_getter: D,
+    version_provider: V,
     executable: Option<Executable>,
     platform: Option<Platform>,
     version: Option<String>,
     process: Option<Child>,
-    config: Config<P, I, D, A, F>,
+    config: Config<P, I, D, A, F, V>,
 }
 
-impl<P, I, D, A, F> Goruut<P, I, D, A, F>
+impl<P, I, D, A, F, V> Goruut<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     fn download_critical(executable: &Executable, p: &Path) -> Result<PathBuf, RustruutError> {
         let _guard = DOWNLOAD_LOCK.lock().unwrap();
@@ -105,7 +108,7 @@ where
     }
 
     pub fn new(
-        di: DependencyInjection<P, I, D, A, F>,
+        di: DependencyInjection<P, I, D, A, F, V>,
         version: Option<&str>,
         writeable_bin_dir: Option<&str>,
         api: Option<&str>,
@@ -117,6 +120,7 @@ where
                 policy: di.policy.clone(),
                 ipa: di.ipa.clone(),
                 dict_getter: di.dict_getter.clone(),
+                version_provider: di.version.clone(),
                 executable: None,
                 platform: None,
                 version: None,
@@ -217,6 +221,7 @@ where
                     policy: di.policy.clone(),
                     ipa: di.ipa.clone(),
                     dict_getter: di.dict_getter.clone(),
+                    version_provider: di.version.clone(),
                     executable: Some(executable),
                     platform: Some(platform),
                     version: Some(version),
@@ -272,6 +277,7 @@ where
             policy: di.policy.clone(),
             ipa: di.ipa.clone(),
             dict_getter: di.dict_getter.clone(),
+            version_provider: di.version.clone(),
             executable: Some(executable),
             platform: Some(platform),
             version: Some(version),
@@ -299,13 +305,14 @@ where
     }
 }
 
-impl<P, I, D, A, F> Drop for Goruut<P, I, D, A, F>
+impl<P, I, D, A, F, V> Drop for Goruut<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     fn drop(&mut self) {
         if let Some(process) = &mut self.process {

@@ -1,5 +1,5 @@
 use crate::di::DependencyInjection;
-use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords};
+use crate::interfaces::{Api, DictGetter, Folder, IpaFlavor, PolicyMaxWords, Version};
 use rand::Rng;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -21,37 +21,41 @@ struct ConfigData {
     load_models: Option<Vec<LoadModel>>,
 }
 
-pub struct Config<P, I, D, A, F>
+pub struct Config<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
     policy: P,
     ipa: I,
     dict: D,
     api: A,
     folder: F,
+    version: V,
     port: u16,
 }
 
-impl<P, I, D, A, F> Config<P, I, D, A, F>
+impl<P, I, D, A, F, V> Config<P, I, D, A, F, V>
 where
     P: PolicyMaxWords,
     I: IpaFlavor,
     D: DictGetter,
     A: Api,
     F: Folder,
+    V: Version,
 {
-    pub fn new(di: DependencyInjection<P, I, D, A, F>) -> Self {
+    pub fn new(di: DependencyInjection<P, I, D, A, F, V>) -> Self {
         let port = rand::thread_rng().gen_range(1024..=65535);
         Self {
             policy: di.policy.clone(),
             ipa: di.ipa.clone(),
             dict: di.dict_getter.clone(),
             api: di.api.clone(),
+            version: di.version.clone(),
             port: port,
             folder: di.folder.clone(),
         }

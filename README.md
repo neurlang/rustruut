@@ -151,7 +151,33 @@ resp.words.iter().map(|w| &w.phonetic).collect::<Vec<_>>().join(" ")
 
 ### Force a specific version
 
-Not possible currently (TODO)
+Use `CustomVersion` with `DependencyInjection::with_parts()`:
+
+```rust
+use rustruut::{DependencyInjection, di};
+
+let di = DependencyInjection::with_parts(
+    di::default_impls::DummyPolicy,
+    di::default_impls::DummyIpaFlavor,
+    di::default_impls::DummyDict,
+    di::default_impls::DummyApi,
+    di::default_impls::DummyFolder,
+    di::custom_impls::CustomVersion::new("0.7.0"),
+);
+```
+
+Or use the environment variable `RUSTRUUT_VERSION` with default version:
+
+```rust
+let di = DependencyInjection {
+    policy: di::default_impls::DummyPolicy,
+    ipa: di::default_impls::DummyIpaFlavor,
+    dict_getter: di::default_impls::DummyDict,
+    api: di::default_impls::DummyApi,
+    folder: di::default_impls::DummyFolder,
+    version: di::custom_impls::CustomVersion::default(),
+};
+```
 
 ---
 
