@@ -203,7 +203,6 @@ where
                     Ok(line) => {
                         if line.contains("Serving...") {
                             tx.send(Some(())).expect("Failed to send message");
-                            return;
                         }
                     }
                     Err(_) => break, // Stop on read error
