@@ -1,6 +1,6 @@
 [package]
 name = "rustruut"
-version = "0.1.0"
+version = "0.8.0"
 edition = "2021"
 license = "MIT"
 description = "Text-to-IPA converter and phonetic translator for Rust, powered by the Goruut phonemization engine"
