@@ -13,6 +13,171 @@ pub struct Release {
 pub fn get_releases() -> Vec<Release> {
     vec![
         Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 96112989,
+            sha256: "4e763ae868d688d1a99635546b945c7f5c8ed27215ee8953c26e5584c17fc1ef".to_string(),
+            architecture: Architecture::Arm64,
+            os: OS::Android,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 96269216,
+            sha256: "0cbe8b95be822816ecee101599f6513d0813cbfd32757a5594165c60dc3e8ad4".to_string(),
+            architecture: Architecture::Amd64,
+            os: OS::Darwin,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 96090146,
+            sha256: "bed080295dd66e20ebea342df5d7f253c5c03169ad9b6a2a3cbfba672acf1bc8".to_string(),
+            architecture: Architecture::Arm64,
+            os: OS::Darwin,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95180153,
+            sha256: "47aa9bbbe28dfb5b8ce2c487689fa878afd5426041e61115721bd3b66e98f36a".to_string(),
+            architecture: Architecture::I386,
+            os: OS::Freebsd,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95875646,
+            sha256: "eff4b5d87abfdf6a3560c100469c45516945c3efbeea44cd4d06f8f8b249da29".to_string(),
+            architecture: Architecture::Amd64,
+            os: OS::Freebsd,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95052397,
+            sha256: "50cab12d20b94f10e5ee774cfffc319a3c31eb30faa0e1bfb28e7985052e58be".to_string(),
+            architecture: Architecture::Arm,
+            os: OS::Freebsd,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 94979410,
+            sha256: "6d01e1272ad4aff4cb50f7b0b9a598a801745be5a84fa9913829845a496b9f8f".to_string(),
+            architecture: Architecture::Arm64,
+            os: OS::Freebsd,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95382335,
+            sha256: "e339cfe42edf6aa9b0187dac8803550307dd3069f7564c8a3145141983e0bcda".to_string(),
+            architecture: Architecture::I386,
+            os: OS::Linux,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 96089588,
+            sha256: "b8aaaa8eb23d042d18fc6c046efbd18765eebff5b2543ff2be7fb0838eddf621".to_string(),
+            architecture: Architecture::Amd64,
+            os: OS::Linux,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95206712,
+            sha256: "fd8a7a5d8b9886a1127c5d53c97ed4b02b073c72f4fb1e5ea7065466aa751deb".to_string(),
+            architecture: Architecture::Arm,
+            os: OS::Linux,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95136245,
+            sha256: "99ab39d719198a2daa31d55d1eb37a69eab6316b17a4c96de306e5213b11d97b".to_string(),
+            architecture: Architecture::Arm64,
+            os: OS::Linux,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 94984285,
+            sha256: "cb3ac43edf6588606a2cb9375845fbc4aec85a6ec03bc672039fa75dd0b85401".to_string(),
+            architecture: Architecture::Riscv64,
+            os: OS::Linux,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95748608,
+            sha256: "e07b9f83b7fb7848449a8d453012bba2a42c1ae363a77de6d7a5fd743dd18d6a".to_string(),
+            architecture: Architecture::I386,
+            os: OS::Windows,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 96321536,
+            sha256: "42a7df59fdcef01520952b6fa05dccccdf73e63934e24d185e1b5e2e65edb818".to_string(),
+            architecture: Architecture::Amd64,
+            os: OS::Windows,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },
+        Release {
+            id: 800,
+            version: "v0.8.0".to_string(),
+            size: 95269888,
+            sha256: "62705ad8cff016adf0ede49e3a757638acb34a571fc6e810971b26d5bdca4d80".to_string(),
+            architecture: Architecture::Arm64,
+            os: OS::Windows,
+            servers: vec![
+                "https://github.com/neurlang/goruut/releases/download/v0.8.0/".to_string(),
+            ],
+        },       
+        Release {
             id: 700,
             version: "v0.7.0".to_string(),
             size: 635278797,
